@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>¡Feliz Cumpleaños!</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --accent:#ff5c8a;
+      --accent-2:#7ee7c6;
+      --glass: rgba(255,255,255,0.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: radial-gradient(1200px 600px at 10% 10%, rgba(127,90,255,0.12), transparent 10%), linear-gradient(180deg,#041024 0%, #071330 50%, #071a2c 100%); color:#e6eef8; overflow:hidden}
+
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:40px;position:relative;overflow:hidden}
+    .card{
+      width:100%;max-width:720px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:28px;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+      text-align:center
+    }
+
+    h1{font-size:2.4rem;margin:0 0 6px 0;letter-spacing:-0.02em}
+    p.lead{margin:0;color:rgba(230,238,248,0.72)}
+
+    .cake{
+      width:180px;height:180px;border-radius:24px;background:linear-gradient(180deg,#ffe6f0,#ffdfee);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(255,92,138,0.12) inset, 0 8px 30px rgba(0,0,0,0.45);
+      transform-origin:center; animation:float 4s ease-in-out infinite;margin:30px auto;font-size:5rem
+    }
+
+    .age-box{margin-top:18px;background:var(--glass);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:inline-block}
+    .big-age{font-size:3.4rem;font-weight:700;line-height:1}
+    .age-meta{font-size:0.95rem;color:rgba(230,238,248,0.8)}
+
+    .small{font-size:0.86rem;color:rgba(230,238,248,0.66)}
+
+    .confetti{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+    .confetti span{position:absolute;width:10px;height:14px;opacity:0.8;animation:confettiFall linear infinite}
+
+    @keyframes float {0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+    @keyframes confettiFall {
+      0% {transform:translateY(-10vh) rotate(0deg); opacity:1;}
+      100% {transform:translateY(110vh) rotate(720deg); opacity:1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="confetti" id="confetti"></div>
+
+    <div class="card" role="main" aria-labelledby="title">
+      <div class="cake" aria-hidden="true">🎂</div>
+      <h1 id="title">¡Feliz cumpleaños <span id="nombrePersona"></span>!</h1>
+      <p class="lead">Hoy celebramos tu día especial 🎉</p>
+      <div class="age-box" aria-live="polite">
+        <div class="big-age" id="ageYears">--</div>
+        <div class="age-meta" id="ageMeta">años</div>
+        <div class="small" id="nextBirthday">Próximo cumpleaños: --</div>
+        <div class="small" id="exactAge">Edad exacta: --</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*
+        --------------------------------------
+        In this part of the code you 
+        have to put a name with an space and
+        you can asing the date of the bithday
+        ---------------------------------------
+      */
+    const birthDateString = '1995-10-31'; // Fecha de nacimiento
+    const nombre = ''; // Deja vacío ('') si no se quiere mostrar nombre
+
+    function calculateAgeComponents(birthDate, nowDate){
+      const birth = new Date(birthDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      const now = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+
+      let years = now.getFullYear() - birth.getFullYear();
+      const hasHadBirthdayThisYear = (now.getMonth() > birth.getMonth()) || (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+      if(!hasHadBirthdayThisYear) years -= 1;
+
+      let y = now.getFullYear() - birth.getFullYear();
+      let m = now.getMonth() - birth.getMonth();
+      let d = now.getDate() - birth.getDate();
+      if(d < 0){
+        m -= 1;
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        d += prevMonth.getDate();
+      }
+      if(m < 0){
+        y -= 1;
+        m += 12;
+      }
+
+      return {years: years, yearsExact: y, months: m, days: d};
+    }
+
+    function formatNextBirthday(birthDate, today){
+      const year = today.getFullYear();
+      let next = new Date(year, birthDate.getMonth(), birthDate.getDate());
+      if(next < today) next = new Date(year+1, birthDate.getMonth(), birthDate.getDate());
+      return next;
+    }
+
+    function daysBetween(a,b){
+      const one = 24*60*60*1000;
+      return Math.round((b - a)/one);
+    }
+
+    function update(){
+      const birth = new Date(birthDateString + 'T00:00:00');
+      const now = new Date();
+      const comps = calculateAgeComponents(birth, now);
+      document.getElementById('ageYears').textContent = comps.years;
+      document.getElementById('ageMeta').textContent = comps.years === 1 ? 'año' : 'años';
+
+      const exactStr = `${comps.yearsExact} años, ${comps.months} meses, ${comps.days} días`;
+      document.getElementById('exactAge').textContent = 'Edad exacta: ' + exactStr;
+
+      const next = formatNextBirthday(birth, now);
+      const days = daysBetween(new Date(now.getFullYear(), now.getMonth(), now.getDate()), new Date(next.getFullYear(), next.getMonth(), next.getDate()));
+      const opt = Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'long',year:'numeric'}).format(next);
+      document.getElementById('nextBirthday').textContent = `Próximo cumpleaños: ${opt} (en ${days} días)`;
+
+      // Mostrar nombre si existe
+      const spanNombre = document.getElementById('nombrePersona');
+      if(nombre && nombre.trim() !== ''){
+        spanNombre.textContent = ' ' + nombre;
+      } else {
+        spanNombre.textContent = '';
+      }
+    }
+
+    function generateConfetti(){
+      const container = document.getElementById('confetti');
+      const colors = ['#FF6B9A','#FFD86B','#7EE7C6','#9AD0FF','#B37DFF'];
+      for(let i=0;i<100;i++){
+        const s = document.createElement('span');
+        s.style.left = Math.random()*100 + '%';
+        s.style.animationDuration = 4 + Math.random()*6 + 's';
+        s.style.animationDelay = Math.random()*5 + 's';
+        s.style.background = colors[Math.floor(Math.random()*colors.length)];
+        s.style.width = (6 + Math.random()*10) + 'px';
+        s.style.height = (8 + Math.random()*12) + 'px';
+        container.appendChild(s);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      update();
+      generateConfetti();
+    });
+  </script>
+</body>
+</html>
